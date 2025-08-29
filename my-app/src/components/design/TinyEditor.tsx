@@ -76,11 +76,12 @@ const TinyEditor = forwardRef<
       }
     },
   }));
+  const apikey = process.env.NEXT_PUBLIC_TIMYMCE_API_KEY as string;
 
   return (
     <div className="border rounded-lg bg-white p-2">
       <Editor
-        apiKey="7l5u7vu1d6cpm83z30bycztaoq6qvm78atezb79o4w5x476h"
+        apiKey={apikey}
         onInit={(evt, editor) => {
           editorRef.current = editor;
         }}
