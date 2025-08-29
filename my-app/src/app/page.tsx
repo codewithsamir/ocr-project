@@ -18,7 +18,7 @@ export default function Home() {
 
         {/* Tagline */}
         <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-          Extract clean text from any document — <strong>Nepali, English, Math, Science</strong> — with AI-powered OCR and smart formatting.
+          Extract clean text from Image — <strong>Nepali, English, Math, Science</strong> — with AI-powered OCR and smart formatting.
         </p>
 
         {/* Features Grid */}
