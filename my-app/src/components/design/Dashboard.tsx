@@ -1,11 +1,22 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import TinyEditor, { TinyEditorRef } from "@/components/design/TinyEditor";
 import { runOCR } from "@/lib/ocr/runOCR";
 import { correctOCRText } from "@/lib/ocr/correctOCRText";
 import { cropImageRegion } from "@/lib/ocr/copyDiagram";
-import { extractPaperCode, findDiagramQuestions, diagramPositions } from "@/lib/ocr/diagramPosition";
-import { Loader2, Upload, Wand2, X, Image as ImageIcon, FileText } from "lucide-react";
+import {
+  extractPaperCode,
+  findDiagramQuestions,
+  diagramPositions,
+} from "@/lib/ocr/diagramPosition";
+import {
+  Loader2,
+  Upload,
+  Wand2,
+  X,
+  Image as ImageIcon,
+  FileText,
+} from "lucide-react";
 
 // Type for stored image
 type StoredImage = {
@@ -23,6 +34,26 @@ export default function OCRWithAIEditor() {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState<number>(0);
   const editorRef = useRef<TinyEditorRef>(null);
+
+  // 🔹 DEMO server function
+  // Here you can send the image + OCR result to your backend
+  const saveToServer = async (image: StoredImage) => {
+    try {
+      // Example API call
+      // await fetch("/api/save-image", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify(image),
+      // });
+      console.log("📤 Demo: sending to server", image);
+    } catch (err) {
+      console.error("❌ Failed to send to server:", err);
+    }
+  };
+
+
+
+
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -44,11 +75,50 @@ export default function OCRWithAIEditor() {
           if (!selectedImageId) {
             setSelectedImageId(newImage.id);
           }
+
+          // 🔹 Demo: send raw uploaded image info to server
+          // saveToServer(newImage);
         };
         reader.readAsDataURL(file);
       });
     }
   };
+
+
+
+  // Add inside your component (below handleFileChange)
+useEffect(() => {
+  const handlePaste = (e: ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    // Case 1: Real image file in clipboard (from snipping tool, desktop copy, etc.)
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) {
+          handleFileChange({ target: { files: [file] } } as any);
+          return;
+        }
+      }
+    }
+
+    // Case 2: Copy from browser (Google Images → gives URL, not file)
+    const text = e.clipboardData?.getData("text");
+    if (text && text.startsWith("http")) {
+      fetch(text)
+        .then((res) => res.blob())
+        .then((blob) => {
+          const file = new File([blob], "pasted-image.png", { type: blob.type });
+          handleFileChange({ target: { files: [file] } } as any);
+        })
+        .catch((err) => console.error("Failed to fetch pasted image:", err));
+    }
+  };
+
+  window.addEventListener("paste", handlePaste);
+  return () => window.removeEventListener("paste", handlePaste);
+}, [handleFileChange]);
 
   const selectedImage = images.find((img) => img.id === selectedImageId) || null;
 
@@ -95,13 +165,20 @@ export default function OCRWithAIEditor() {
       }
 
       // Save result
+      const updatedImage: StoredImage = {
+        ...selectedImage,
+        ocrResult: finalHtml,
+        isProcessing: false,
+      };
+
       setImages((prev) =>
         prev.map((img) =>
-          img.id === selectedImageId
-            ? { ...img, ocrResult: finalHtml, isProcessing: false }
-            : img
+          img.id === selectedImageId ? updatedImage : img
         )
       );
+
+      // 🔹 Demo: send processed OCR result to server
+      // saveToServer(updatedImage);
 
       // Show in editor
       editorRef.current?.setContent(finalHtml);
@@ -124,6 +201,10 @@ export default function OCRWithAIEditor() {
       if (selectedImageId === id) {
         setSelectedImageId(newImages.length > 0 ? newImages[0].id : null);
       }
+
+      // 🔹 Demo: if you want, call server to delete
+      // await fetch(`/api/delete-image/${id}`, { method: "DELETE" });
+
       return newImages;
     });
   };
@@ -147,7 +228,7 @@ export default function OCRWithAIEditor() {
           <h3 className="text-xl font-semibold text-gray-700">Images & History</h3>
 
           {/* Upload Multiple */}
-          <label
+          {/* <label
             className="flex flex-col items-center justify-center w-full border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-blue-500 transition h-32"
           >
             <div className="flex flex-col items-center">
@@ -163,7 +244,33 @@ export default function OCRWithAIEditor() {
               onChange={handleFileChange}
               multiple
             />
-          </label>
+          </label> */}
+
+          <label
+  onDragOver={(e) => e.preventDefault()} // allow drop
+  onDrop={(e) => {
+    e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFileChange({ target: { files: e.dataTransfer.files } } as any);
+    }
+  }}
+  className="flex flex-col items-center justify-center w-full border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-blue-500 transition h-32"
+>
+  <div className="flex flex-col items-center">
+    <Upload className="text-gray-500 mb-2 w-12 h-12" />
+    <p className="text-gray-600 text-base font-medium">
+      Click, Drag, or Paste to Upload
+    </p>
+  </div>
+  <input
+    type="file"
+    accept="image/*"
+    className="hidden"
+    onChange={handleFileChange}
+    multiple
+  />
+</label>
+
 
           {/* Image List (History) */}
           <div className="flex-1 overflow-y-auto max-h-96 space-y-3">
@@ -196,7 +303,7 @@ export default function OCRWithAIEditor() {
                       <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
                     )}
                     {img.ocrResult && (
-                      <FileText className="w-4 h-4 text-green-500" title="Processed" />
+                      <FileText className="w-4 h-4 text-green-500"  />
                     )}
                     <button
                       onClick={(e) => {
