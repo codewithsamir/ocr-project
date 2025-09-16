@@ -220,7 +220,19 @@ useEffect(() => {
 
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-      <h2 className="text-3xl font-bold text-gray-800">📄 OCR + AI + TinyMCE</h2>
+      <h2 className="text-3xl font-bold text-gray-800">
+  📄 TextRact (powered by{" "}
+  <a
+    href="https://mywebsitelink.com"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="text-blue-600 hover:underline"
+  >
+    Samir Rian
+  </a>
+  )
+</h2>
+
 
       <div className="grid lg:grid-cols-[1fr_2fr] gap-8">
         {/* Left: Image History & Upload */}
