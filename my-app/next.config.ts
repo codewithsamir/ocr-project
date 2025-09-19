@@ -10,7 +10,10 @@ images:{
       pathname:"/**"
     }]
   },
+<<<<<<< HEAD
    
+=======
+>>>>>>> ec60637f5052feffd9db7659fe9f8cbd06288df8
   reactStrictMode:false,
   eslint:{
     ignoreDuringBuilds:true,
