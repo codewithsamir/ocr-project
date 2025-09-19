@@ -3,6 +3,7 @@ import { Editor } from "@tinymce/tinymce-react";
 import { useRef, useImperativeHandle, forwardRef, useEffect } from "react";
 
 export type TinyEditorRef = {
+   getContent: () => string;
   setContent: (value: string) => void;
 };
 
@@ -20,6 +21,9 @@ const TinyEditor = forwardRef<
 
   // Expose setContent() to parent
   useImperativeHandle(ref, () => ({
+        getContent: () => {
+      return editorRef.current?.getContent() || "";
+    },
     setContent: (value: string) => {
       if (editorRef.current) {
         editorRef.current.setContent(value);

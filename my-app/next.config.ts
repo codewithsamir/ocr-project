@@ -10,31 +10,24 @@ images:{
       pathname:"/**"
     }]
   },
-    async headers() {
-    return [
-      {
-        // Apply to all routes
-        source: '/:path*',
-        headers: [
-          {
-            key: 'Cross-Origin-Opener-Policy',
-            value: 'same-origin',
-          },
-          {
-            key: 'Cross-Origin-Embedder-Policy',
-            value: 'require-corp',
-          },
-        ],
-      },
-    ];
-  },
+   
   reactStrictMode:false,
   eslint:{
     ignoreDuringBuilds:true,
   },
   typescript:{
     ignoreBuildErrors:true,
-  }
+  },
+webpack: (config) => {
+    config.module.rules.push({
+      test: /pdf\.worker(\.min)?\.mjs$/,
+      type: "asset/resource",
+      generator: {
+        filename: "static/chunks/[name][ext]",
+      },
+    });
+    return config;
+  },
   
 };
 
